@@ -231,6 +231,8 @@ while len(alive) > 1:
 
     for g in range(event["#"] - 1):
       tribute = matches[g][randrange(0, len(matches[g]))]
+      while tribute in involved:
+        tribute = matches[g][randrange(0, len(matches[g]))]
       m = matches[g].pop(matches[g].index(tribute))
       involved.append(temp_players.pop(temp_players.index(m)))
 
