@@ -1,0 +1,43 @@
+[
+  {"#": 1, "t": "10", "text": "{name1} runs into the woods.", "conditional": [["day", "==", 1]]},
+  {"#": 1, "t": "10", "text": "{name1} runs into the woods.", "conditional": [["day", "==", 1]]},
+  {"#": 1, "t": "10", "text": "{name1} runs into the woods.", "conditional": [["day", "==", 1]]},
+  {"#": 1, "t": "10", "text": "{name1} grabs some supplies and runs into the woods.", "conditional": [["day", "==", 1]]},
+  {"#": 1, "t": "10", "text": "{name1} runs off with a backpack full of food.", "conditional": [["day", "==", 1]], "item": "food", "gain": [1], "lose": []},
+  {"#": 2, "t": "10", "text": "{name1} finds a shovel but drops it when {name2} punches {him/her1}.", "conditional": [["day", "==", 1]], "injury": [1, 0]},
+  {"#": 1, "t": "10", "text": "{name1} steps off their pedestal too soon.", "conditional": [["day", "==", 1]], "killer": [], "killed": [1]},
+  {"#": 2, "t": "10", "text": "While running, {name1} throws a knife at {name2}.", "conditional": [["day", "==", 1]], "killer": [1], "killed": [2]},
+  {"#": 3, "t": "10", "text": "{name1} and {name2} team up to kill {name3}.", "conditional": [["day", "==", 1]], "killer": [1, 2], "killed": [3]},
+  {"#": 2, "t": "10", "text": "{name1} is hit in the chest with an arrow.", "conditional": [["day", "==", 1]], "killer": [2], "killed": [1]},
+  {"#": 2, "t": "10", "text": "{name1} grabs some food, but is killed by {name2} in a fight over it.", "conditional": [["day", "==", 1]], "killer": [2], "killed": [1], "injury": [0, 2]},
+  {"#": 2, "t": "10", "text": "{name1} beats {name2} to death.", "conditional": [["day", "==", 1]], "killer": [1], "killed": [2]},
+  
+  {"#": 1, "t": "10", "text": "{name1} explores the arena in search of food."},
+  {"#": 1, "t": "10", "text": "Exhausted, {name1} climbs a tree to take a nap."},
+  {"#": 2, "t": "10", "text": "{name1} attempts to strangle {name2}, but fails."},
+  {"#": 3, "t": "10", "text": "{name1}, {name2} and {name3} team up to find other tributes."},
+  
+  {"#": 1, "t": "01", "text": "{name1} builds a fire and cooks some food before going to bed."},
+  {"#": 1, "t": "01", "text": "{name1} struggles to build a fire, and doesn't get much sleep."},
+  {"#": 2, "t": "01", "text": "{name1} tries to strangle {name2}, but is scared away when {he/she2} wakes up."},
+  {"#": 2, "t": "01", "text": "{name1} and {name2} build a fire and take turns sleeping."},
+  
+  {"#": 2, "t": "11", "text": "{name1} and {name2} decide to make an alliance.", "conditional": [["alive", ">", 3]], "bond": [[{"2": true}], [{"1": true}]]},
+
+  {"#": 1, "t": "10", "text": "{name1} grabs a spear off the ground.", "item": "spear", "gain": [1], "lose": []},
+  {"#": 1, "t": "10", "text": "{name1} drops a spear while being chased.", "item": "spear", "gain": [], "lose": [1]},
+  {"#": 1, "t": "10", "text": "{name1} digs up a mine.", "item": "mine", "gain": [1], "lose": []},
+  {"#": 2, "t": "10", "text": "{name1} steals a spear from {name2}'s camp.", "item": "spear", "gain": [1], "lose": [2]},
+  {"#": 2, "t": "10", "text": "Someone steals {name1}'s spear while {he/she1} is sleeping.", "item": "spear", "gain": [2], "lose": [1]},
+
+  {"#": 1, "t": "01", "text": "{name1} dies from an infection.", "killer": [], "killed": [1], "player-conditional": [[["injury", ">", 4]]]},
+  {"#": 2, "t": "10", "text": "{name1} throws {name2} into a waterfall.", "killer": [1], "killed": [2]},
+
+  {"#": 2, "t": "11", "text": "{name1} stabs {name2} with a spear.", "killer": [1], "killed": [2], "item": "spear", "gain": [1], "lose": [1]},
+  {"#": 2, "t": "10", "text": "{name1} throws a spear at {name2}.", "killer": [1], "killed": [2], "item": "spear", "gain": [], "lose": [1]},
+  {"#": 4, "t": "10", "text": "{name1} detonates a mine, killing {name2}, {name3}, {name4} and {himself/herself1}.", "killer": [1], "killed": [1, 2, 3, 4], "item": "mine", "gain": [], "lose": [1]},
+  {"#": 2, "t": "10", "text": "{name1} steps on a mine buried by {name2}.", "killer": [2], "killed": [1], "item": "mine", "gain": [], "lose": [1]},
+
+  {"#": 1, "t": "10", "text": "{name1} trips and is injured.", "injury": [3]},
+  {"#": 2, "t": "11", "text": "{name1} heals some of {name2}'s wounds.", "injury": [0, -4], "player-conditional": [[], [["injury", ">", 5]]]}
+]
