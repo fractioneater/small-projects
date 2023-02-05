@@ -46,7 +46,7 @@ with open(story) as file:
 	full = []
 	for i in range(len(temp)):
 		c = 0
-		while temp[i][c] == "	":
+		while temp[i][c] == "\t":
 			c += 1
 		indents.append(c)
 		full.append(temp[i][c:])

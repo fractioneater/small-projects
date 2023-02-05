@@ -1,6 +1,6 @@
 [>] start
 [=] Choose an option.
-  [>] A
+	[>] A
 	[~] You picked A.
 	[>] B
 	[~] You picked B.
