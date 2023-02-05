@@ -32,8 +32,8 @@ Once tkinter is installed, you are ready.
 
 ### **Other**
 
-The changelog is available in the [discussions](https://github.com/fractioneater/python-journal/discussions/categories/changelog) tab on github.
+The changelog is available in the [discussions](https://github.com/fractioneater/small-projects/discussions/categories/changelog) tab on github.
 
 You can delete `created/info.md`. In fact, you should delete it.
 
-Report any bugs you find in the [issues](https://github.com/fractioneater/python-journal/issues) tab on github
+Report any bugs you find in the [issues](https://github.com/fractioneater/small-projects/issues) tab on github
