@@ -179,6 +179,10 @@ def find_acceptable_events(temp_players, involved):
 
 def print_message(event):
   message = event["text"]
+
+  message = message.replace("{i:", "\u001b[38;5;214m")
+  message = message.replace("{h:", "\u001b[38;5;62;1m")
+
   for num in range(len(involved)):
     if event.get("killed") is not None and num + 1 in event["killed"]:
       message = message.replace(f"{{name{num + 1}}}", ("\u001b[38;5;203m" + involved[num]["name"] + "\u001b[0m"))
@@ -195,8 +199,7 @@ def print_message(event):
       message = message.replace(f"{{him/her{num + 1}}}", "her")
       message = message.replace(f"{{himself/herself{num + 1}}}", "herself")
           
-  if event.get("item") is not None:
-    message = message.replace(event["item"], ("\u001b[38;5;214m" + event["item"] + "\u001b[0m"))
+  message = message.replace("}", "\u001b[0m")
 
   print(message)
 
