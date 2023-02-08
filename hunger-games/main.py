@@ -35,7 +35,7 @@ def find_acceptable_events(temp_players, involved):
         if b == ["-"] or b[g] == "-":
           combined.append(a[g])
         else:
-          combined.append(list(set(a[g]).intersection(b[g])))
+          combined.append([val for val in a[g] if val in b[g]])
     return combined[:]
 
   def conditional_valid(compare, a, b):
@@ -92,8 +92,12 @@ def find_acceptable_events(temp_players, involved):
     
     # item events
 
-    if event.get("item") is not None:
-      if 1 in event["lose"] and not event["item"] in involved[0]["items"]:
+    if event.get("items") is not None:
+      a = True
+      for item in event["items"]:
+        if 1 in item["lose"] and not item["item"] in involved[0]["items"]:
+          a = False
+      if not a:
         continue
     
     # find player matches
@@ -136,16 +140,19 @@ def find_acceptable_events(temp_players, involved):
         if [] in bond_matches:
           continue
 
-      if event.get("item") is not None:
+      if event.get("items") is not None:
         item_matches.clear()
         for n in range(2, event["#"] + 1):
           number_matches = []
-          if len(event["lose"]) > 0:
-            if len(event["lose"]) > 1 or not 1 in event["lose"]:
-              if n in event["lose"]:
-                for player in temp_players:
-                  if event["item"] in player["items"]:
-                    number_matches.append(player)
+          for player in temp_players:
+            a = True
+            for item in event["items"]:
+              if len(item["lose"]) > 0:
+                if len(item["lose"]) > 1 or not 1 in item["lose"]:
+                  if n in item["lose"]:
+                    if not item["item"] in player["items"]:
+                      a = False
+            if a: number_matches.append(player)
           item_matches.append(number_matches)
         if [] in item_matches:
           continue
@@ -243,12 +250,13 @@ while len(alive) > 1:
 
     # list changes
 
-    if event.get("item") is not None:
+    if event.get("items") is not None:
       for player in involved:
-        if involved.index(player) + 1 in event["lose"]:
-          players[players.index(player)]["items"].remove(event["item"])
-        elif involved.index(player) + 1 in event["gain"]:
-          players[players.index(player)]["items"].append(event["item"])
+        for item in range(len(event["items"])):
+          if involved.index(player) + 1 in event["items"][item]["lose"]:
+            players[players.index(player)]["items"].remove(event["items"][item]["item"])
+          elif involved.index(player) + 1 in event["items"][item]["gain"]:
+            players[players.index(player)]["items"].append(event["items"][item]["item"])
     
     if event.get("injury") is not None:
       for i in range(len(involved)):
