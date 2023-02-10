@@ -1,6 +1,7 @@
 from random import randrange
 import json
 import math
+import sys
 
 e = open("events.json")
 p = open("players.json")
@@ -56,10 +57,10 @@ def find_acceptable_events(temp_players, involved):
       continue
     
     if day % 2 == 1:
-      if not event["t"][0]:
+      if event["t"][0] == "0":
         continue
     else:
-      if not event["t"][1]:
+      if event["t"][1] == "0":
         continue
 
     # conditional events
@@ -197,12 +198,16 @@ def print_message(event):
       message = message.replace(f"{{name{num + 1}}}", ("\u001b[38;5;122m" + involved[num]["name"] + "\u001b[0m"))
     if involved[num]["gender"] == "M":
       message = message.replace(f"{{he/she{num + 1}}}", "he")
+      message = message.replace(f"{{He/She{num + 1}}}", "He")
       message = message.replace(f"{{his/her{num + 1}}}", "his")
+      message = message.replace(f"{{His/Her{num + 1}}}", "His")
       message = message.replace(f"{{him/her{num + 1}}}", "him")
       message = message.replace(f"{{himself/herself{num + 1}}}", "himself")
     elif involved[num]["gender"] == "F":
       message = message.replace(f"{{he/she{num + 1}}}", "she")
+      message = message.replace(f"{{He/She{num + 1}}}", "She")
       message = message.replace(f"{{his/her{num + 1}}}", "her")
+      message = message.replace(f"{{His/Her{num + 1}}}", "Her")
       message = message.replace(f"{{him/her{num + 1}}}", "her")
       message = message.replace(f"{{himself/herself{num + 1}}}", "herself")
           
@@ -227,6 +232,9 @@ while len(alive) > 1:
     involved.append(temp_players.pop(randrange(0, len(temp_players))))
 
     accepted_events, player_matches = find_acceptable_events(temp_players, involved)
+    if len(accepted_events) == 0:
+      print("There are no events that meet the criteria.")
+      sys.exit()
     
     event = accepted_events[randrange(0, len(accepted_events))]
 
