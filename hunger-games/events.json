@@ -30,7 +30,7 @@
   {"#": 2, "t": "10", "text": "{name1} steals a {i:spear} from {name2}'s camp.", "item": "spear", "gain": [1], "lose": [2]},
   {"#": 2, "t": "10", "text": "Someone steals {name1}'s {i:spear} while {he/she1} is sleeping.", "item": "spear", "gain": [2], "lose": [1]},
 
-  {"#": 1, "t": "01", "text": "{name1} dies from an infection.", "killer": [], "killed": [1], "player-conditional": [[["injury", ">", 4]]]},
+  {"#": 1, "t": "01", "text": "{name1} dies from an infection.", "killer": [], "killed": [1], "playerConditional": [[["injury", ">", 4]]]},
   {"#": 2, "t": "10", "text": "{name1} throws {name2} into a waterfall.", "killer": [1], "killed": [2]},
 
   {"#": 2, "t": "11", "text": "{name1} stabs {name2} with a {i:spear}.", "killer": [1], "killed": [2], "item": "spear", "gain": [1], "lose": [1]},
@@ -39,5 +39,5 @@
   {"#": 2, "t": "10", "text": "{name1} steps on a {i:mine} buried by {name2}.", "killer": [2], "killed": [1], "item": "mine", "gain": [], "lose": [1]},
 
   {"#": 1, "t": "10", "text": "{name1} trips and is injured.", "injury": [3]},
-  {"#": 2, "t": "11", "text": "{name1} heals some of {name2}'s wounds.", "injury": [0, -4], "player-conditional": [[], [["injury", ">", 5]]]}
+  {"#": 2, "t": "11", "text": "{name1} heals some of {name2}'s wounds.", "injury": [0, -4], "playerConditional": [[], [["injury", ">", 5]]]}
 ]

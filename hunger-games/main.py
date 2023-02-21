@@ -16,6 +16,21 @@ for player in players:
     if not (player["name"] == bond["name"] or bond["name"] in player["bond"]):
       player["bond"][bond["name"]] = 0
 
+class Event:
+  def __init__(self, number, t, text, conditional, bond_conditional, player_conditional, injury, killer, killed, items, bond, count):
+    self.tributes = number
+    self.t = t
+    self.text = text
+    self.conditional = conditional
+    self.bond_conditional = bond_conditional
+    self.player_conditional = player_conditional
+    self.injury = injury
+    self.killer = killer
+    self.killed = killed
+    self.items = items
+    self.bond = bond
+    self.count = count
+
 alive = players[:]
 involved = []
 day = 1
@@ -26,7 +41,7 @@ def find_acceptable_events(temp_players, involved):
 
   def combine_matches(event, a, b):
     combined = []
-    for g in range(event["#"] - 1):
+    for g in range(event.tributes - 1):
       if a == "-" or a[g] == "-":
         if b == "-" or b[g] == "-":
           combined.append("-")
@@ -64,28 +79,33 @@ def find_acceptable_events(temp_players, involved):
       return a <= b
     if compare == "contains":
       return b in a
-    if compare == "notcontains":
+    if compare == "notContains":
       return not b in a
 
   acceptable_events = []
   player_matches = []
 
-  for event in events:
-    if len(temp_players) + 1 < event["#"]:
+  for ev in events:
+
+    event = Event(ev["#"], ev["t"], ev["text"], ev.get("conditional"), ev.get("bondConditional"),
+      ev.get("playerConditional"), ev.get("injury"), ev.get("killer"), ev.get("killed"),
+      ev.get("items"), ev.get("bond"), ev.get("count"))
+
+    if len(temp_players) + 1 < event.tributes:
       continue
     
     if day % 2 == 1:
-      if event["t"][0] == "0":
+      if event.t[0] == "0":
         continue
     else:
-      if event["t"][1] == "0":
+      if event.t[1] == "0":
         continue
 
     # conditional events
 
     passes_conditional = True
-    if event.get("conditional") is not None:
-      for conditional in event["conditional"]:
+    if event.conditional is not None:
+      for conditional in event.conditional:
         if conditional[0] == "day":
           if not conditional_valid(conditional[1], day, conditional[2]):
             passes_conditional = False
@@ -93,26 +113,30 @@ def find_acceptable_events(temp_players, involved):
           if not conditional_valid(conditional[1], len(alive), conditional[2]):
             passes_conditional = False
 
-    if event.get("player-conditional") is not None:
-      for conditional in event["player-conditional"][0]:
-        if not conditional_valid(conditional[1], involved[0][conditional[0]], conditional[2]):
-          passes_conditional = False
+    if event.player_conditional is not None:
+      for conditional in event.player_conditional[0]:
+        if conditional[0] == "bondTotal":
+          if not conditional_valid(conditional[1], sum(involved[0]["bond"].values()), conditional[2]):
+            passes_conditional = False
+        else:
+          if not conditional_valid(conditional[1], involved[0][conditional[0]], conditional[2]):
+            passes_conditional = False
         
     if not passes_conditional:
       continue
 
     # fatal events
 
-    if event.get("killed") is not None:
-      if 1 in event["killer"]:
+    if event.killed is not None:
+      if 1 in event.killer:
         if involved[0]["pacifist"]:
           continue
     
     # item events
 
-    if event.get("items") is not None:
+    if event.items is not None:
       a = True
-      for item in event["items"]:
+      for item in event.items:
         if 1 in item["lose"] and not item["item"] in involved[0]["items"]:
           a = False
       if not a:
@@ -123,30 +147,33 @@ def find_acceptable_events(temp_players, involved):
     conditional_matches = "-"
     bond_matches = "-"
     item_matches = "-"
-    fatal_matches = "-"
 
-    if event["#"] > 1:
-      if event.get("player-conditional") is not None:
+    if event.tributes > 1:
+      if event.player_conditional is not None:
         conditional_matches = []
-        for n in range(2, event["#"] + 1):
+        for n in range(2, event.tributes + 1):
           number_matches = []
           for player in temp_players:
             a = True
-            for conditional in event["player-conditional"][n - 1]:
-              if not conditional_valid(conditional[1], player[conditional[0]], conditional[2]):
-                a = False
+            for conditional in event.player_conditional[n - 1]:
+              if conditional[0] == "bondTotal":
+                if not conditional_valid(sum(player["bond"].values())):
+                  a = False
+              else:
+                if not conditional_valid(conditional[1], player[conditional[0]], conditional[2]):
+                  a = False
             if a: number_matches.append(player)
           conditional_matches.append(number_matches)
         if [] in conditional_matches:
           continue
 
-      if event.get("bond-conditional") is not None:
+      if event.bond_conditional is not None:
         bond_matches = []
-        for n in range(2, event["#"] + 1): 
+        for n in range(2, event.tributes + 1): 
           number_matches = []
           for player in temp_players:
             a = True
-            for conditional in event["bond-conditional"]:
+            for conditional in event.bond_conditional:
               if n == conditional[0]:
                 if not conditional_valid(conditional[1], involved[0]["bond"][player["name"]], conditional[2]):
                   a = False
@@ -155,13 +182,13 @@ def find_acceptable_events(temp_players, involved):
         if [] in bond_matches:
           continue
 
-      if event.get("items") is not None:
+      if event.items is not None:
         item_matches = []
-        for n in range(2, event["#"] + 1):
+        for n in range(2, event.tributes + 1):
           number_matches = []
           for player in temp_players:
             a = True
-            for item in event["items"]:
+            for item in event.items:
               if len(item["lose"]) > 0:
                 if len(item["lose"]) > 1 or not 1 in item["lose"]:
                   if n in item["lose"]:
@@ -185,23 +212,25 @@ def find_acceptable_events(temp_players, involved):
       total = combine_lists(total, n if type(n) is list else "-")
     if total == "-":
       total = temp_players
-    if 1 < len(total) < event["#"]:
+    if 1 < len(total) < event.tributes:
       continue
 
-    player_matches.append(combined)
-        
-    acceptable_events.append(event)
+    count = event.count if event.count is not None else 1
+
+    for c in range(count):
+      player_matches.append(combined)
+      acceptable_events.append(event)
   
   return acceptable_events, player_matches
 
 def print_message(event):
-  message = event["text"]
+  message = event.text
 
   message = message.replace("{i:", "\u001b[38;5;214m")
   message = message.replace("{h:", "\u001b[38;5;62;1m")
 
   for num in range(len(involved)):
-    if event.get("killed") is not None and num + 1 in event["killed"]:
+    if event.killed is not None and num + 1 in event.killed:
       message = message.replace(f"{{name{num + 1}}}", ("\u001b[38;5;203m" + involved[num]["name"] + "\u001b[0m"))
     else:
       message = message.replace(f"{{name{num + 1}}}", ("\u001b[38;5;122m" + involved[num]["name"] + "\u001b[0m"))
@@ -256,7 +285,7 @@ while len(alive) > 1:
     
     # choose other players and print event
 
-    for g in range(event["#"] - 1):
+    for g in range(event.tributes - 1):
       tribute = matches[g][randrange(0, len(matches[g]))]
       while tribute in involved:
         tribute = matches[g][randrange(0, len(matches[g]))]
@@ -267,9 +296,9 @@ while len(alive) > 1:
 
     # list changes
 
-    if event.get("items") is not None:
+    if event.items is not None:
       for player in involved:
-        for item in event["items"]:
+        for item in event.items:
           for lose in item["lose"]:
             if lose == involved.index(player) + 1:
               players[players.index(player)]["items"].remove(item["item"])
@@ -277,13 +306,13 @@ while len(alive) > 1:
             if gain == involved.index(player) + 1:
               players[players.index(player)]["items"].append(item["item"])
     
-    if event.get("injury") is not None:
+    if event.injury is not None:
       for i in range(len(involved)):
-        players[players.index(involved[i])]["injury"] += event["injury"][i]
+        players[players.index(involved[i])]["injury"] += event.injury[i]
     
-    if event.get("bond") is not None:
+    if event.bond is not None:
       for i in range(len(involved)):
-        b = event["bond"][i]
+        b = event.bond[i]
         for h in range(len(involved)):
           if str(h + 1) in b:
             if type(b[str(h + 1)]) is int:
@@ -291,11 +320,11 @@ while len(alive) > 1:
             elif type(b[str(h + 1)]) is str:
               players[players.index(involved[i])]["bond"][involved[h]["name"]] += int(b[str(h + 1)])
 
-    if event.get("killed") is not None:
+    if event.killed is not None:
       for i in range(len(involved)):
-        if i + 1 in event["killer"]:
-          players[players.index(involved[i])]["kills"] += len(event["killed"])
-        if i + 1 in event["killed"]:
+        if i + 1 in event.killer:
+          players[players.index(involved[i])]["kills"] += len(event.killed)
+        if i + 1 in event.killed:
           rank.insert(0, alive[alive.index(involved[i])]["name"])
           alive.pop(alive.index(involved[i]))
     
