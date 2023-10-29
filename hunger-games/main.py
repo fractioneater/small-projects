@@ -1,6 +1,7 @@
 from random import randrange
 import json
 import math
+import re
 import sys
 
 e = open("events.json")
@@ -57,93 +58,90 @@ def find_acceptable_events(temp_players, involved):
   def combine_lists(a, b):
     if a == "-":
       if b == "-":
-        return "-"
+        return "-" # Any, Any
       else:
-        return b
+        return b # Any, Constrained
     else:
       if b == "-":
-        return a
+        return a # Constrained, Any
       else:
-        return [val for val in a if val in b]
+        return [val for val in a if val in b] # Constrained, Constrained
 
   def conditional_valid(compare, a, b):
-    if compare == "==":
-      return a == b
-    if compare == ">":
-      return a > b
-    if compare == "<":
-      return a < b
-    if compare == ">=":
-      return a >= b
-    if compare == "<=":
-      return a <= b
-    if compare == "contains":
-      return b in a
-    if compare == "notContains":
-      return not b in a
+    if compare == "==": return a == b
+    if compare == ">": return a > b
+    if compare == "<": return a < b
+    if compare == ">=": return a >= b
+    if compare == "<=": return a <= b
+    if compare == "contains": return b in a
+    if compare == "notContains": return not b in a
 
   acceptable_events = []
   player_matches = []
 
   for ev in events:
-
     event = Event(ev["#"], ev["t"], ev["text"], ev.get("conditional"), ev.get("bondConditional"),
       ev.get("playerConditional"), ev.get("injury"), ev.get("killer"), ev.get("killed"),
       ev.get("items"), ev.get("bond"), ev.get("count"))
 
+    # If there aren't enough players for the event, move on.
     if len(temp_players) + 1 < event.tributes:
       continue
     
+    # If it's the wrong time of day, move on.
     if day % 2 == 1:
-      if event.t[0] == "0":
-        continue
+      if event.t[0] == "0": continue
     else:
-      if event.t[1] == "0":
-        continue
+      if event.t[1] == "0": continue
 
-    # conditional events
+    # CONDITIONAL EVENTS
 
-    passes_conditional = True
     if event.conditional is not None:
+      ok = True
+      # If any of the conditionals is not satisfied, the event won't work.
       for conditional in event.conditional:
         if conditional[0] == "day":
           if not conditional_valid(conditional[1], day, conditional[2]):
-            passes_conditional = False
+            ok = False; break
         elif conditional[0] == "alive":
           if not conditional_valid(conditional[1], len(alive), conditional[2]):
-            passes_conditional = False
+            ok = False; break
+      
+      if not ok: continue
 
     if event.player_conditional is not None:
+      ok = True
+      # If any of the randomly chosen player's characteristics don't meet the conditions, move on.
       for conditional in event.player_conditional[0]:
         if conditional[0] == "bondTotal":
           if not conditional_valid(conditional[1], sum(involved[0]["bond"].values()), conditional[2]):
-            passes_conditional = False
+            ok = False; break
         else:
           if not conditional_valid(conditional[1], involved[0][conditional[0]], conditional[2]):
-            passes_conditional = False
+            ok = False; break
         
-    if not passes_conditional:
-      continue
+      if not ok: continue
 
-    # fatal events
+    # FATAL EVENTS
 
+    # If the killer is a pacifist, discard the event.
     if event.killed is not None:
-      if 1 in event.killer:
-        if involved[0]["pacifist"]:
-          continue
-    
-    # item events
-
-    if event.items is not None:
-      a = True
-      for item in event.items:
-        if 1 in item["lose"] and not item["item"] in involved[0]["items"]:
-          a = False
-      if not a:
+      if 1 in event.killer and involved[0]["pacifist"]:
         continue
     
-    # find player matches
+    # ITEM EVENTS
 
+    # If the player is losing an item that they don't have, that's not good.
+    if event.items is not None:
+      ok = True
+      for item_name, item in event.items.items():
+        if 1 in item["lose"] and not item_name in involved[0]["items"]:
+          ok = False; break
+      if not ok: continue
+    
+    # FIND PLAYER MATCHES
+
+    # "-" means that any player could fill the slot.
     conditional_matches = "-"
     bond_matches = "-"
     item_matches = "-"
@@ -154,58 +152,54 @@ def find_acceptable_events(temp_players, involved):
         for n in range(2, event.tributes + 1):
           number_matches = []
           for player in temp_players:
-            a = True
+            # Each player slot has their own conditionals, so only the slot being filled matters.
             for conditional in event.player_conditional[n - 1]:
               if conditional[0] == "bondTotal":
                 if not conditional_valid(sum(player["bond"].values())):
-                  a = False
+                  break
               else:
                 if not conditional_valid(conditional[1], player[conditional[0]], conditional[2]):
-                  a = False
-            if a: number_matches.append(player)
+                  break
+            else: number_matches.append(player)
           conditional_matches.append(number_matches)
-        if [] in conditional_matches:
-          continue
+        if [] in conditional_matches: continue
 
       if event.bond_conditional is not None:
         bond_matches = []
         for n in range(2, event.tributes + 1): 
           number_matches = []
           for player in temp_players:
-            a = True
             for conditional in event.bond_conditional:
+              # Only check the conditional if the bond applies to the player slot being filled.
               if n == conditional[0]:
                 if not conditional_valid(conditional[1], involved[0]["bond"][player["name"]], conditional[2]):
-                  a = False
-            if a: number_matches.append(player)
+                  break
+            else: number_matches.append(player)
           bond_matches.append(number_matches)
-        if [] in bond_matches:
-          continue
+        if [] in bond_matches: continue
 
       if event.items is not None:
         item_matches = []
+        # Find which players can fill each slot needed for the event.
         for n in range(2, event.tributes + 1):
           number_matches = []
           for player in temp_players:
-            a = True
-            for item in event.items:
-              if len(item["lose"]) > 0:
-                if len(item["lose"]) > 1 or not 1 in item["lose"]:
-                  if n in item["lose"]:
-                    if item["lose"].count(n) > player["items"].count(item["item"]):
-                      a = False
-            if a: number_matches.append(player)
+            for item_name, item in event.items.items():
+              if n in item["lose"]:
+                # If that slot loses the item more times than the player has it,
+                # that player won't work for that slot.
+                if item["lose"].count(n) > player["items"].count(item_name):
+                  break
+            else: number_matches.append(player)
           item_matches.append(number_matches)
-        if [] in item_matches:
-          continue
+        if [] in item_matches: continue
     
-    # combine player matches
+    # COMBINE PLAYER MATCHES
 
     combined_a = combine_matches(event, conditional_matches, bond_matches)
     combined = combine_matches(event, item_matches, combined_a)
 
-    if [] in combined:
-      continue
+    if [] in combined: continue
 
     total = "-"
     for n in combined:
@@ -234,21 +228,10 @@ def print_message(event):
       message = message.replace(f"{{name{num + 1}}}", ("\u001b[38;5;203m" + involved[num]["name"] + "\u001b[0m"))
     else:
       message = message.replace(f"{{name{num + 1}}}", ("\u001b[38;5;122m" + involved[num]["name"] + "\u001b[0m"))
-    if involved[num]["gender"] == "M":
-      message = message.replace(f"{{he/she{num + 1}}}", "he")
-      message = message.replace(f"{{He/She{num + 1}}}", "He")
-      message = message.replace(f"{{his/her{num + 1}}}", "his")
-      message = message.replace(f"{{His/Her{num + 1}}}", "His")
-      message = message.replace(f"{{him/her{num + 1}}}", "him")
-      message = message.replace(f"{{himself/herself{num + 1}}}", "himself")
-    elif involved[num]["gender"] == "F":
-      message = message.replace(f"{{he/she{num + 1}}}", "she")
-      message = message.replace(f"{{He/She{num + 1}}}", "She")
-      message = message.replace(f"{{his/her{num + 1}}}", "her")
-      message = message.replace(f"{{His/Her{num + 1}}}", "Her")
-      message = message.replace(f"{{him/her{num + 1}}}", "her")
-      message = message.replace(f"{{himself/herself{num + 1}}}", "herself")
-          
+
+    # Replace all pronoun placeholders like "{he/she1}" with the proper pronoun.
+    message = re.sub(r"\{([A-Za-z]*)/([A-Za-z]*)" + str(num + 1) + r"\}", r"\1" if involved[num]["gender"] == "M" else r"\2", message)
+
   message = message.replace("}", "\u001b[0m")
 
   print(message)
@@ -264,7 +247,7 @@ while len(alive) > 1:
 
   while not len(temp_players) == 0:
 
-    # choose a player and create event list
+    # Choose a player and create a list of events based on that player's status.
 
     involved.clear()
     involved.append(temp_players.pop(randrange(0, len(temp_players))))
@@ -283,7 +266,7 @@ while len(alive) > 1:
       else:
         matches.append(match)
     
-    # choose other players and print event
+    # Pick the other players from the matches and print out the event.
 
     for g in range(event.tributes - 1):
       tribute = matches[g][randrange(0, len(matches[g]))]
@@ -294,17 +277,17 @@ while len(alive) > 1:
 
     print_message(event)
 
-    # list changes
+    # Make changes to the player's status based on the event.
 
     if event.items is not None:
       for player in involved:
-        for item in event.items:
+        for item_name, item in event.items.items():
           for lose in item["lose"]:
             if lose == involved.index(player) + 1:
-              players[players.index(player)]["items"].remove(item["item"])
+              players[players.index(player)]["items"].remove(item_name)
           for gain in item["gain"]:
             if gain == involved.index(player) + 1:
-              players[players.index(player)]["items"].append(item["item"])
+              players[players.index(player)]["items"].append(item_name)
     
     if event.injury is not None:
       for i in range(len(involved)):
@@ -328,12 +311,11 @@ while len(alive) > 1:
           rank.insert(0, alive[alive.index(involved[i])]["name"])
           alive.pop(alive.index(involved[i]))
     
-    if len(alive) <= 1:
-      break
+    if len(alive) <= 1: break
   
-  # delay
-
   day += 1
+
+  # Wait for the user to click enter before advancing.
   if delay and len(alive) > 1:
     input("")
     print("\033[F\033[2K")
@@ -351,17 +333,17 @@ for player in players:
   max_name_length = max(max_name_length, len(player["name"]))
 
 typed = ""
-print("(default, rank, name, kills, items, or injury)")
-while not typed in ["default", "rank", "name", "kills", "items", "injury"]:
+print("(original, rank, name, kills, items, or injury)")
+while not typed in ["original", "rank", "name", "kills", "items", "injury"]:
   typed = input("SORT BY: ")
+  if typed == "": typed = "rank"
   print("\033[F\033[2K", end="")
 print("\033[F\033[2K(yes/y to accept)")
 print_items = input("PRINT ITEMS? ")
 print("\033[F\033[2K\033[F\033[2K", end="")
 
-# sort players
-
-if not typed == "default":
+# Sort the players
+if not typed == "original":
   if typed == "name":
     players.sort(reverse=False, key=lambda x : x["name"])
   elif typed == "rank":
@@ -373,8 +355,7 @@ if not typed == "default":
   elif typed == "injury":
     players.sort(reverse=False, key=lambda x : x["injury"])
 
-# print stats
-
+# Print out the stats
 print(f"NAME\033[{max_name_length - 2}CRANK\033[2CKILLS\033[2CINJURY\033[2CITEMS\u001b[0m")
 for player in players:
   print(
@@ -382,6 +363,5 @@ for player in players:
     f"{rank.index(player['name']) + 1}\033[{6 - len(str(rank.index(player['name']) + 1))}C" +
     f"{player['kills']}\033[{7 - len(str(player['kills']))}C" + 
     f"{player['injury']}\033[{8 - len(str(player['injury']))}C" +
-    f"{len(player['items'])}" + 
-    f"{': ' + ', '.join(player['items']) if print_items.lower() in ['y', 'yes'] else ''}"
+    f"{', '.join(player['items']) if print_items.lower() in ['y', 'yes'] else len(player['items'])}"
   )
